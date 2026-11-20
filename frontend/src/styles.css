@@ -1,0 +1,33 @@
+:root {
+  --navy: #0f1d33;
+  --crimson: #a4162b;
+  --pink: #e0637a;
+  --surface: #f6f8fa;
+  --text: #33465f;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  font-family: 'IBM Plex Sans', system-ui, -apple-system, sans-serif;
+  background: var(--surface);
+  color: var(--text);
+}
+
+.landing {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+}
+
+.landing h1 {
+  color: var(--navy);
+  font-size: 3rem;
+  margin: 0;
+}
