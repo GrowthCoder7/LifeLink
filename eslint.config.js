@@ -19,6 +19,10 @@ module.exports = [
     rules: security.configs.recommended.rules,
   },
   {
+    files: ['**/tests/**/*.js', '**/*.test.js'],
+    languageOptions: { globals: { ...globals.node, ...globals.jest } },
+  },
+  {
     files: ['db/**/*.js'],
     rules: {
       'security/detect-non-literal-fs-filename': 'off',
@@ -27,8 +31,12 @@ module.exports = [
   },
   {
     files: ['frontend/**/*.{js,jsx}'],
-    ...react.configs.flat.recommended,
-    ...react.configs.flat['jsx-runtime'],
+    plugins: { react },
+    rules: {
+      ...react.configs.flat.recommended.rules,
+      ...react.configs.flat['jsx-runtime'].rules,
+      'react/prop-types': 'off',
+    },
     languageOptions: {
       globals: { ...globals.node, ...globals.browser },
       ecmaVersion: 2023,
