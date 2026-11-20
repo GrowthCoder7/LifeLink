@@ -1,7 +1,9 @@
+const { Pool } = require('pg');
 const logger = require('./logger');
 
 async function allocateUnit(client, unitId, requestId, distanceKm) {
-  const release = typeof client.connect === 'function';
+  // Accepts a Pool (checks out its own connection) or an already checked-out client.
+  const release = client instanceof Pool;
   const conn = release ? await client.connect() : client;
   try {
     await conn.query('BEGIN');
