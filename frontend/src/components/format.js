@@ -4,8 +4,9 @@ export const URGENCIES = ['ROUTINE', 'URGENT', 'EMERGENCY'];
 
 const DAY_MS = 24 * 60 * 60 * 1000;
 
+// Enum -> readable text ("WHOLE_BLOOD" -> "Whole blood"); PRBC is an acronym and stays as is.
 export const label = (value) =>
-  value ? value.charAt(0) + value.slice(1).toLowerCase().replace(/_/g, ' ') : '';
+  !value || value === 'PRBC' ? value || '' : value.charAt(0) + value.slice(1).toLowerCase().replace(/_/g, ' ');
 
 export const seconds = (ms) => `${(ms / 1000).toFixed(1)} s`;
 
