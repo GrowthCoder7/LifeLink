@@ -31,6 +31,8 @@ const matchCreated = {
   properties: {
     requestId: { type: 'string' },
     hospitalId: { type: 'string' },
+    bloodGroup: { type: 'string', enum: BLOOD_GROUPS },
+    component: { type: 'string', enum: COMPONENTS },
     status: { type: 'string' },
     matchMs: { type: 'number' },
     matches: {
@@ -56,6 +58,9 @@ const requestEscalated = {
     bloodGroup: { type: 'string', enum: BLOOD_GROUPS },
     component: { type: 'string', enum: COMPONENTS },
     urgency: { type: 'string', enum: URGENCIES },
+    // Set on the one-time admin alert for requests escalated longer than ESCALATION_ALERT_MIN.
+    alert: { type: 'boolean' },
+    escalatedMinutes: { type: 'number' },
   },
 };
 
