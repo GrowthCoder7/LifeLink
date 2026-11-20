@@ -85,10 +85,12 @@ jobs:
     needs: test
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0 # full history for SonarCloud blame and new-code detection
       - uses: actions/download-artifact@v4
         with:
           name: coverage
-      - uses: SonarSource/sonarqube-scan-action@v2
+      - uses: SonarSource/sonarqube-scan-action@v7
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
           SONAR_HOST_URL: https://sonarcloud.io
@@ -98,11 +100,6 @@ jobs:
     needs: scan
     steps:
       - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
-        with:
-          node-version: 20
-          cache: npm
-      - run: npm ci
       - run: docker build -f db/Dockerfile .
       - run: docker build -f gateway/Dockerfile .
       - run: docker build -f services/donor-service/Dockerfile .

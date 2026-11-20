@@ -98,6 +98,17 @@ describe('gateway RBAC and proxy', () => {
     expect(res.status).toBe(403);
   });
 
+  test('spoofed identity headers are dropped on POST with Expect: 100-continue too', async () => {
+    const res = await request(app)
+      .post('/api/inventory')
+      .set('Authorization', `Bearer ${tokenFor('BLOODBANK_STAFF', { institutionId: 'inst-1' })}`)
+      .set('Expect', '100-continue')
+      .set('x-institution-id', 'someone-elses-bank')
+      .send({ bloodGroup: 'O-' });
+    expect(res.status).toBe(200);
+    expect(res.body).toMatchObject({ role: 'BLOODBANK_STAFF', institutionId: 'inst-1' });
+  });
+
   test('forwards the verified identity and drops spoofed identity headers', async () => {
     const res = await request(app)
       .get('/api/inventory?status=AVAILABLE')

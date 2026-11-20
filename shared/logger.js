@@ -1,7 +1,7 @@
-const LEVELS = { debug: 10, info: 20, warn: 30, error: 40 };
+const LEVELS = new Map([['debug', 10], ['info', 20], ['warn', 30], ['error', 40]]);
 
 const configured = String(process.env.LOG_LEVEL || 'info').toLowerCase();
-const threshold = LEVELS[configured] || LEVELS.info;
+const threshold = LEVELS.get(configured) || LEVELS.get('info');
 
 function serialize(message, meta) {
   if (meta === undefined) return message;
@@ -9,7 +9,7 @@ function serialize(message, meta) {
 }
 
 function write(level, message, meta) {
-  if (LEVELS[level] < threshold) return;
+  if (LEVELS.get(level) < threshold) return;
   const line = `[${new Date().toISOString()}] ${level.toUpperCase()} ${serialize(message, meta)}`;
   if (level === 'error' || level === 'warn') {
     console.error(line);
