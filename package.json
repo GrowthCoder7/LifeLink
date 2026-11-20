@@ -1,0 +1,29 @@
+{
+  "name": "lifelink",
+  "version": "1.0.0",
+  "private": true,
+  "description": "LifeLink - enterprise blood bank and organ donation coordination platform (MVP)",
+  "workspaces": [
+    "shared",
+    "gateway",
+    "services/*",
+    "frontend"
+  ],
+  "scripts": {
+    "dev": "concurrently -k -n gateway,donor,inventory,matching,notification,frontend -c blue,green,yellow,magenta,cyan,red \"npm run dev -w @lifelink/gateway\" \"npm run dev -w @lifelink/donor-service\" \"npm run dev -w @lifelink/inventory-service\" \"npm run dev -w @lifelink/matching-service\" \"npm run dev -w @lifelink/notification-service\" \"npm run dev -w @lifelink/frontend\"",
+    "test": "npm test --workspaces --if-present",
+    "lint": "eslint .",
+    "db:migrate": "node db/migrate.js",
+    "db:seed": "node db/seed/seed.js",
+    "test:db:up": "docker compose -f docker-compose.test.yml up -d",
+    "test:db:down": "docker compose -f docker-compose.test.yml down -v"
+  },
+  "devDependencies": {
+    "@eslint/js": "9.17.0",
+    "concurrently": "9.1.0",
+    "eslint": "9.17.0",
+    "eslint-plugin-react": "7.37.3",
+    "eslint-plugin-security": "3.0.1",
+    "globals": "15.14.0"
+  }
+}

@@ -1,0 +1,150 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: lifelink
+      POSTGRES_PASSWORD: lifelink
+      POSTGRES_DB: lifelink
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U lifelink -d lifelink"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  redis:
+    image: redis:7-alpine
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  migrate:
+    build:
+      context: .
+      dockerfile: db/Dockerfile
+    environment:
+      DATABASE_URL: postgresql://lifelink:lifelink@postgres:5432/lifelink
+      PII_KEY: ${PII_KEY:-lifelink-dev-pii-key}
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  gateway:
+    build:
+      context: .
+      dockerfile: gateway/Dockerfile
+    ports:
+      - "8080:8080"
+    environment:
+      PORT: "8080"
+      SERVICE_NAME: lifelink-gateway
+      JWT_SECRET: ${JWT_SECRET:-lifelink-dev-jwt-secret}
+      DATABASE_URL: postgresql://lifelink:lifelink@postgres:5432/lifelink
+      REDIS_URL: redis://redis:6379
+      DONOR_SERVICE_URL: http://donor-service:4001
+      INVENTORY_SERVICE_URL: http://inventory-service:4002
+      MATCHING_SERVICE_URL: http://matching-service:4003
+      NOTIFICATION_SERVICE_URL: http://notification-service:4004
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      migrate:
+        condition: service_completed_successfully
+
+  donor-service:
+    build:
+      context: .
+      dockerfile: services/donor-service/Dockerfile
+    environment:
+      PORT: "4001"
+      SERVICE_NAME: donor-service
+      JWT_SECRET: ${JWT_SECRET:-lifelink-dev-jwt-secret}
+      PII_KEY: ${PII_KEY:-lifelink-dev-pii-key}
+      DATABASE_URL: postgresql://lifelink:lifelink@postgres:5432/lifelink
+      REDIS_URL: redis://redis:6379
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      migrate:
+        condition: service_completed_successfully
+
+  inventory-service:
+    build:
+      context: .
+      dockerfile: services/inventory-service/Dockerfile
+    environment:
+      PORT: "4002"
+      SERVICE_NAME: inventory-service
+      DATABASE_URL: postgresql://lifelink:lifelink@postgres:5432/lifelink
+      REDIS_URL: redis://redis:6379
+      EXPIRY_INTERVAL_MS: "10000"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      migrate:
+        condition: service_completed_successfully
+
+  matching-service:
+    build:
+      context: .
+      dockerfile: services/matching-service/Dockerfile
+    environment:
+      PORT: "4003"
+      SERVICE_NAME: matching-service
+      DATABASE_URL: postgresql://lifelink:lifelink@postgres:5432/lifelink
+      REDIS_URL: redis://redis:6379
+      ESCALATION_RETRY_MS: "15000"
+      ESCALATION_ALERT_MIN: "2"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      migrate:
+        condition: service_completed_successfully
+
+  notification-service:
+    build:
+      context: .
+      dockerfile: services/notification-service/Dockerfile
+    environment:
+      PORT: "4004"
+      SERVICE_NAME: notification-service
+      DATABASE_URL: postgresql://lifelink:lifelink@postgres:5432/lifelink
+      REDIS_URL: redis://redis:6379
+      SMS_PROVIDER: ${SMS_PROVIDER:-console}
+      DONOR_SERVICE_URL: http://donor-service:4001
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      migrate:
+        condition: service_completed_successfully
+
+  frontend:
+    build:
+      context: .
+      dockerfile: frontend/Dockerfile
+    ports:
+      - "5173:5173"
+    depends_on:
+      - gateway
+
+volumes:
+  pgdata:
