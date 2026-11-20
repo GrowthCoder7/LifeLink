@@ -42,9 +42,11 @@ const USERS = [
   { email: 'donor.priya@lifelink.dev', role: 'DONOR', institutionName: null, donorEmail: 'donor.priya@lifelink.dev' },
 ];
 
+// Each bank's first units become near-expiry/expired (see classifySeedUnit). Hebbal lists A+
+// first so demo step 1 (2 x O+ PRBC from Hebbal) leaves its amber near-expiry rows visible.
 const BANK_UNITS = [
-  { bank: 0, group: 'O+', component: 'PRBC', count: 5 },
   { bank: 0, group: 'A+', component: 'PRBC', count: 4 },
+  { bank: 0, group: 'O+', component: 'PRBC', count: 5 },
   { bank: 0, group: 'B+', component: 'WHOLE_BLOOD', count: 3 },
   { bank: 0, group: 'AB+', component: 'PLASMA', count: 2 },
   { bank: 0, group: 'O-', component: 'PRBC', count: 1 },
