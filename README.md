@@ -154,7 +154,7 @@ repo-relative paths and includes the `shared/` package.
 
 1. Create the project on <https://sonarcloud.io> (import the GitHub repository) and
    turn off Automatic Analysis, since CI runs the scan.
-2. Fill `sonar.organization` and `sonar.projectKey` in `sonar-project.properties`.
+2. `sonar-project.properties` is set to organization `growthcoder7`, project `GrowthCoder7_LifeLink`.
 3. Add a `SONAR_TOKEN` repository secret in GitHub (SonarCloud → My Account → Security).
 4. Push to `develop` or open a pull request. The CI `scan` job downloads the coverage
    artifacts from `test` and runs `SonarSource/sonarqube-scan-action@v7` against
