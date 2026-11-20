@@ -3,6 +3,7 @@ const { publish } = require('@lifelink/shared/events');
 const logger = require('@lifelink/shared/logger');
 const requestModel = require('../models/requestModel');
 const { rankRequests } = require('./ranking');
+const { compatibleDonorGroups } = require('./compatibility');
 
 const MINUTE_MS = 60 * 1000;
 const ALERT_TTL_SECONDS = 7 * 24 * 60 * 60;
@@ -13,6 +14,8 @@ function escalationEvent(request, extra = {}) {
     bloodGroup: request.blood_group,
     component: request.component,
     urgency: request.urgency,
+    // Lets notification-service call the right donors without its own copy of the table.
+    donorGroups: compatibleDonorGroups(request.blood_group),
     ...extra,
   };
 }

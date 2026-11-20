@@ -74,7 +74,7 @@ describe('POST /api/requests and matching', () => {
     expect(res.body).toMatchObject({ status: 'ESCALATED' });
     expect(res.body.matches).toHaveLength(2);
     expect(await streamPayloads(redis, 'request.escalated')).toEqual([
-      { requestId: res.body.id, bloodGroup: 'O-', component: 'PRBC', urgency: 'EMERGENCY' },
+      { requestId: res.body.id, bloodGroup: 'O-', component: 'PRBC', urgency: 'EMERGENCY', donorGroups: ['O-'] },
     ]);
 
     await insertUnit(hebbal, 'O-');

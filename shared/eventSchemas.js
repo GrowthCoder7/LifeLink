@@ -58,6 +58,7 @@ const requestEscalated = {
     bloodGroup: { type: 'string', enum: BLOOD_GROUPS },
     component: { type: 'string', enum: COMPONENTS },
     urgency: { type: 'string', enum: URGENCIES },
+    donorGroups: { type: 'array', items: { type: 'string', enum: BLOOD_GROUPS } },
     // Set on the one-time admin alert for requests escalated longer than ESCALATION_ALERT_MIN.
     alert: { type: 'boolean' },
     escalatedMinutes: { type: 'number' },
