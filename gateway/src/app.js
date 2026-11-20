@@ -4,7 +4,7 @@ const { authenticate } = require('./middleware/auth');
 const { authorize } = require('./middleware/rbac');
 const { generalLimiter } = require('./middleware/rateLimit');
 const authRoutes = require('./routes/auth');
-const { buildProxies } = require('./routes/proxy');
+const { buildProxies, forwardIdentity } = require('./routes/proxy');
 
 const app = express();
 app.disable('x-powered-by');
@@ -29,7 +29,7 @@ app.get('/api/health', (req, res) => {
 app.use('/api/auth', authRoutes);
 
 // No body parser before the proxy: request bodies stream straight through to the services.
-app.use(authenticate, authorize, ...buildProxies());
+app.use(authenticate, authorize, forwardIdentity, ...buildProxies());
 
 app.use(notFoundHandler);
 app.use(errorHandler);

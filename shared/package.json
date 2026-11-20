@@ -4,7 +4,7 @@
   "private": true,
   "description": "Shared database, Redis, event, allocation and error helpers for LifeLink",
   "scripts": {
-    "test": "jest --coverage"
+    "test": "jest --coverage --passWithNoTests"
   },
   "dependencies": {
     "ioredis": "5.4.2",

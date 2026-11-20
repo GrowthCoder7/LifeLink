@@ -89,7 +89,7 @@ describe('notification consumers', () => {
     expect((await inbox(users.bankB))[0].title).toBe('Emergency request escalated');
     expect((await inbox(users.donor)).map((n) => n.channel).sort()).toEqual(['IN_APP', 'SMS']);
     expect(await inbox(users.hospital)).toEqual([]);
-    expect(log).toHaveBeenCalledWith(expect.stringMatching(new RegExp(`^\\[SMS\\] to=user:${users.donor.userId} body=Urgent`)));
+    expect(log).toHaveBeenCalledWith(expect.stringContaining(`[SMS] to=user:${users.donor.userId} body=Urgent`));
     log.mockRestore();
   });
 

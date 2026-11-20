@@ -186,9 +186,20 @@ async function insertUnits(client, institutionIds) {
   }
 }
 
-async function seed() {
+// --if-empty (used by docker compose's one-shot migrate container) leaves an already seeded
+// database alone, so re-running `docker compose up` (e.g. --scale) does not wipe demo data.
+async function alreadySeeded(pool) {
+  const { rows } = await pool.query('SELECT EXISTS (SELECT 1 FROM institution) AS seeded');
+  return rows[0].seeded;
+}
+
+async function seed({ ifEmpty = process.argv.includes('--if-empty') } = {}) {
   const pool = createPool(process.env.DATABASE_URL);
   try {
+    if (ifEmpty && (await alreadySeeded(pool))) {
+      logger.info('database already seeded; skipping (--if-empty)');
+      return;
+    }
     const client = await pool.connect();
     try {
       await client.query('BEGIN');

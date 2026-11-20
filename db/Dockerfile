@@ -12,4 +12,4 @@ ENV NODE_ENV=production
 COPY --from=build /app/node_modules ./node_modules
 COPY shared ./shared
 COPY db ./db
-CMD ["sh", "-c", "node db/migrate.js && node db/seed/seed.js"]
+CMD ["sh", "-c", "node db/migrate.js && node db/seed/seed.js --if-empty"]

@@ -8,15 +8,18 @@ const IDENTITY_HEADERS = {
   'x-donor-id': 'donorId',
 };
 
-// Never trust identity headers from the browser; only the verified JWT sets them.
-function forwardIdentity(proxyReq, req) {
+// Never trust identity headers from the browser; only the verified JWT sets them. This runs as
+// middleware on req.headers (copied by the proxy when it builds the request) rather than in
+// onProxyReq: with "Expect: 100-continue" the outgoing headers are already sent by then.
+function forwardIdentity(req, res, next) {
   for (const [header, key] of Object.entries(IDENTITY_HEADERS)) {
-    proxyReq.removeHeader(header);
+    delete req.headers[header]; // eslint-disable-line security/detect-object-injection
     const value = req.user && req.user[key]; // eslint-disable-line security/detect-object-injection
     if (value) {
-      proxyReq.setHeader(header, String(value));
+      req.headers[header] = String(value); // eslint-disable-line security/detect-object-injection
     }
   }
+  next();
 }
 
 function onError(err, req, res) {
@@ -31,7 +34,6 @@ function serviceProxy(context, target) {
     target,
     changeOrigin: true,
     logLevel: 'silent',
-    onProxyReq: forwardIdentity,
     onError,
   });
 }

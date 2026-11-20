@@ -41,6 +41,11 @@ docker compose up --build
 
 Then open <http://localhost:5173>.
 
+The one-shot `migrate` container applies migrations and seeds the demo data only into an
+empty database, so later `docker compose up` runs (such as `--scale`) keep your data.
+To reset the demo, run `docker compose down -v && docker compose up -d`. Outside Docker,
+`npm run db:seed` always truncates and re-seeds.
+
 ## Non-Docker path
 
 ```
@@ -105,15 +110,60 @@ All accounts use the password `Demo@1234`.
   `x-donor-id` headers set by the gateway. This is safe only on the internal
   Docker network; never expose service ports to the host.
 
+- Organs appear only as the donor `organ_pledge` flag; there is no organ matching.
+- SMS uses a console adapter (`SMS_PROVIDER=console`) that logs `[SMS] to=... body=...`
+  and stores a `channel='SMS'` notification row. No real SMS is sent.
+
+## Design notes
+
+Decisions taken where the spec left room, so the code can be read against the report:
+
+| Area | Decision |
+|---|---|
+| Matching concurrency | `matchRequest` holds a per-request PostgreSQL advisory lock, so the POST handler, the retry timer, the `inventory.updated` consumer and a second matching instance never over-fill the same request. `match.unit_id UNIQUE` plus `FOR UPDATE SKIP LOCKED` still guarantee a unit is never allocated twice. |
+| Availability cache | Read as a hint only. If the hinted banks cannot cover the request, matching searches the whole database. |
+| Escalation alert | Requests escalated longer than `ESCALATION_ALERT_MIN` re-publish `request.escalated` with `alert: true`; a Redis `SET NX` key makes it fire once across restarts and instances. Notification-service sends those to admins. |
+| Event payloads | `match.created` also carries `bloodGroup` and `component` (for the message text); `request.escalated` carries `donorGroups` so notification-service needs no copy of the compatibility table. |
+| Donor calls | Notification-service asks donor-service for eligible donors (`GET /api/donors?eligible=true`), so the eligibility rule lives in one place. If donor-service is down the event stays un-acked and is retried. |
+| Rate limiting | 300 / 15 min per IP, 10 / min on login. The notification bell's 5 s poll (`GET /api/notifications`) is not counted: with the hospital table also polling every 5 s, one tab would otherwise exceed 300 / 15 min. Pages pause polling in hidden tabs. |
+| CORS | The gateway answers CORS itself (a few lines) because the browser app runs on port 5173; no extra library. |
+| Inventory updates | `PATCH /api/inventory/:id` accepts `AVAILABLE` or `EXPIRED` (discard). Units become `ALLOCATED` only through the allocate endpoint. |
+
+Known MVP limits (marked `shortcut:` in the code):
+
+- Role-wide notifications share one `read_at`, so one staff member marking one read marks it for their team.
+- Notifications for one event are written in one transaction, but a crash between commit and `XACK` would store them twice (no event-id column to deduplicate).
+- Stream consumers are named after the container hostname. `docker compose stop/start` keeps the name, so un-acked events are redelivered; a recreated container would leave the old consumer's pending entries unclaimed (no `XAUTOCLAIM`).
+- The availability cache and alert dedupe use `KEYS`, fine for demo-sized Redis.
+
 ## Testing
 
-`npm test` runs Jest in every workspace. API tests use a disposable PostgreSQL
-and Redis; start them with `npm run test:db:up` and stop them with
-`npm run test:db:down`.
+```
+npm run test:db:up     # Postgres on 55432, Redis on 56379
+npm test               # Jest in every workspace, with coverage
+npm run test:db:down
+```
+
+API tests use the disposable PostgreSQL (`DATABASE_URL_TEST`, migrated by a Jest
+`globalSetup`) and `ioredis-mock`. Suites truncate tables, so do not point a running
+dev stack at the test database while tests run. The nine required cases are named
+`TC-01` … `TC-09`. Coverage is written per workspace to `coverage/lcov.info` with
+repo-relative paths and includes the `shared/` package.
 
 ## SonarCloud
 
-1. Fill `sonar.organization` and `sonar.projectKey` in `sonar-project.properties`.
-2. Add a `SONAR_TOKEN` secret in GitHub.
-3. The CI workflow downloads the coverage artifacts and runs
-   `SonarSource/sonarqube-scan-action` against <https://sonarcloud.io>.
+1. Create the project on <https://sonarcloud.io> (import the GitHub repository) and
+   turn off Automatic Analysis, since CI runs the scan.
+2. Fill `sonar.organization` and `sonar.projectKey` in `sonar-project.properties`.
+3. Add a `SONAR_TOKEN` repository secret in GitHub (SonarCloud → My Account → Security).
+4. Push to `develop` or open a pull request. The CI `scan` job downloads the coverage
+   artifacts from `test` and runs `SonarSource/sonarqube-scan-action@v7` against
+   `https://sonarcloud.io`. The React client is analysed for issues but excluded from
+   coverage, since it has no unit tests.
+
+## CI
+
+`.github/workflows/ci.yml` runs on pushes and pull requests to `develop` and `main`:
+**build** (`npm ci`) → **lint** → **test** (PostgreSQL 16 and Redis 7 service
+containers, migrations, `npm test`, coverage artifacts) → **scan** (SonarCloud) →
+**package** (`docker build` of every image, no push).

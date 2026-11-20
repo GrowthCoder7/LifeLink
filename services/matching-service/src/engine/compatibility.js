@@ -1,7 +1,7 @@
 const { BLOOD_GROUPS } = require('@lifelink/shared/eventSchemas');
 
 // Red-cell ABO/Rh compatibility: recipient -> donor groups it can receive from.
-const CAN_RECEIVE_FROM = {
+const CAN_RECEIVE_FROM = new Map(Object.entries({
   'O-': ['O-'],
   'O+': ['O-', 'O+'],
   'A-': ['O-', 'A-'],
@@ -10,10 +10,10 @@ const CAN_RECEIVE_FROM = {
   'B+': ['O-', 'O+', 'B-', 'B+'],
   'AB-': ['O-', 'A-', 'B-', 'AB-'],
   'AB+': [...BLOOD_GROUPS],
-};
+}));
 
 function compatibleDonorGroups(recipientGroup) {
-  return BLOOD_GROUPS.includes(recipientGroup) ? [...CAN_RECEIVE_FROM[recipientGroup]] : [];
+  return [...(CAN_RECEIVE_FROM.get(recipientGroup) || [])];
 }
 
 function isCompatible(donorGroup, recipientGroup) {
