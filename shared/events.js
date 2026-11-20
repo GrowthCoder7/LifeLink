@@ -66,7 +66,8 @@ async function handleEntry(redis, entry, group, handler) {
 }
 
 async function consume({ stream, group, consumer, handler }) {
-  const redis = getRedis();
+  // Dedicated connection: a BLOCKing XREADGROUP would otherwise stall every other command.
+  const redis = getRedis().duplicate();
   await createConsumerGroup(redis, stream, group);
 
   let pending = [];
