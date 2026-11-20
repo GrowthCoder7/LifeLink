@@ -15,6 +15,7 @@ app.use((req, res, next) => {
     'Access-Control-Allow-Origin': process.env.CORS_ORIGIN || 'http://localhost:5173',
     'Access-Control-Allow-Headers': 'Authorization, Content-Type',
     'Access-Control-Allow-Methods': 'GET, POST, PATCH, OPTIONS',
+    'Access-Control-Max-Age': '600',
   });
   return req.method === 'OPTIONS' ? res.sendStatus(204) : next();
 });

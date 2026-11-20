@@ -1,12 +1,19 @@
 const { getPool } = require('@lifelink/shared/db');
 
 const UNIT_COLUMNS = `u.id, u.institution_id, i.name AS institution_name, u.blood_group, u.component,
-  u.collected_at, u.expires_at, u.status, u.expiry_flag, u.donor_id, u.created_at`;
+  u.collected_at, u.expires_at, u.status, u.expiry_flag, u.donor_id, u.created_at,
+  m.created_at AS allocated_at, h.name AS allocated_to`;
+
+// Allocation details (when and to which hospital) for the blood bank's "Recent allocations".
+const UNIT_JOINS = `inventory_unit u JOIN institution i ON i.id = u.institution_id
+  LEFT JOIN match m ON m.unit_id = u.id
+  LEFT JOIN request r ON r.id = m.request_id
+  LEFT JOIN institution h ON h.id = r.hospital_id`;
 
 async function listUnits({ institutionId, bloodGroup, status, expiryFlag }) {
   const { rows } = await getPool().query(
     `SELECT ${UNIT_COLUMNS}
-     FROM inventory_unit u JOIN institution i ON i.id = u.institution_id
+     FROM ${UNIT_JOINS}
      WHERE ($1::uuid IS NULL OR u.institution_id = $1)
        AND ($2::text IS NULL OR u.blood_group = $2)
        AND ($3::text IS NULL OR u.status = $3)
@@ -20,7 +27,7 @@ async function listUnits({ institutionId, bloodGroup, status, expiryFlag }) {
 async function findUnit(id) {
   const { rows } = await getPool().query(
     `SELECT ${UNIT_COLUMNS}
-     FROM inventory_unit u JOIN institution i ON i.id = u.institution_id
+     FROM ${UNIT_JOINS}
      WHERE u.id = $1`,
     [id]
   );
