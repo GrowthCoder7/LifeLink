@@ -1,0 +1,17 @@
+{
+  "name": "@lifelink/shared",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Shared database, Redis, event, allocation and error helpers for LifeLink",
+  "scripts": {
+    "test": "jest --coverage --passWithNoTests"
+  },
+  "dependencies": {
+    "ioredis": "5.4.2",
+    "pg": "8.13.1"
+  },
+  "devDependencies": {
+    "ioredis-mock": "8.13.1",
+    "jest": "29.7.0"
+  }
+}
