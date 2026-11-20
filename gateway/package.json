@@ -4,7 +4,7 @@
   "private": true,
   "description": "LifeLink API gateway: JWT auth, RBAC, rate limiting and service proxying",
   "scripts": {
-    "dev": "node --env-file=../../.env --watch src/server.js",
+    "dev": "node --env-file=../.env --watch src/server.js",
     "start": "node src/server.js",
     "test": "jest --coverage"
   },

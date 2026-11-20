@@ -36,8 +36,8 @@ async function applyFile(pool, file) {
   }
 }
 
-async function migrate() {
-  const pool = createPool(process.env.DATABASE_URL);
+async function migrate(connectionString = process.env.DATABASE_URL) {
+  const pool = createPool(connectionString);
   try {
     await ensureMigrationsTable(pool);
     const applied = await appliedMigrations(pool);
@@ -53,7 +53,11 @@ async function migrate() {
   }
 }
 
-migrate().catch((err) => {
-  logger.error('migration failed', { error: err.message, stack: err.stack });
-  process.exit(1);
-});
+if (require.main === module) {
+  migrate().catch((err) => {
+    logger.error('migration failed', { error: err.message, stack: err.stack });
+    process.exit(1);
+  });
+}
+
+module.exports = { migrate };

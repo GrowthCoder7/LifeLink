@@ -1,4 +1,7 @@
-const { Pool } = require('pg');
+const { Pool, types } = require('pg');
+
+// Return DATE columns as 'YYYY-MM-DD' strings so no timezone shift happens.
+types.setTypeParser(1082, (value) => value);
 
 let pool = null;
 
